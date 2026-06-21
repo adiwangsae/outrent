@@ -47,6 +47,11 @@ async function startServer() {
   // Mount API
   app.use('/api', apiRouter);
 
+  // Endpoint tes
+  app.get('/test', (req, res) => {
+   res.send('Backend hidup');
+  });
+
   // 2. Vite Middleware (Mode Development)
   if (process.env.NODE_ENV !== "production") {
     console.log("[Server] Mounting Vite middleware...");
