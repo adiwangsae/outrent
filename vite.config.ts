@@ -12,6 +12,7 @@ export default defineConfig(() => {
       },
     },
     server: {
+      host: '0.0.0.0',
       // Tambahkan ini agar domain Ngrok tidak diblokir oleh Vite
       allowedHosts: ['.ngrok-free.dev', '.ngrok-free.app'],
 
