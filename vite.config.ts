@@ -24,14 +24,16 @@ export default defineConfig(() => {
       // when Vite is mounted as middleware in Express, but kept here for standard Vite preview.
       proxy: {
         '/api': {
-          target: process.env.VITE_API_URL || 'http://127.0.0.1:3000',
+          target: 'http://localhost:3000', // Paksa ke port 3000
           changeOrigin: true,
+          secure: false,
         },
         '/uploads': {
-          target: process.env.VITE_API_URL || 'http://127.0.0.1:3000',
+          target: 'http://localhost:3000', // Paksa ke port 3000
           changeOrigin: true,
+          secure: false,
         }
-      }
+      },  
     },
     build: {
       outDir: 'dist',
