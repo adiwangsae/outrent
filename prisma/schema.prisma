@@ -1,0 +1,175 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  password       String
+  name           String
+  role           String   @default("customer") // admin, customer, staff
+  phone          String?
+  address        String?
+  identityType   String? // KTP, KTM, SIM
+  identityNumber String?
+  identityUrl    String?
+  isVerified     Boolean  @default(false)
+  isDemo         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  bookings      Booking[]
+  payments      Payment[]
+  verifications Verification[]
+  notifications Notification[]
+  auditLogs     AuditLog[]
+}
+
+model Category {
+  id          String          @id @default(uuid())
+  name        String
+  description String?
+  items       InventoryItem[]
+}
+
+model InventoryItem {
+  id          String   @id @default(uuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  name        String
+  description String?
+  pricePerDay Float
+  icon        String?
+
+  units     InventoryUnit[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model InventoryUnit {
+  id              String        @id @default(uuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  unitCode        String        @unique
+  status          String        @default("available") // available, borrowed, maintenance, damaged, lost
+  condition       String?
+
+  bookingItems    BookingItem[]
+  maintenanceLogs MaintenanceLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Booking {
+  id            String   @id @default(uuid())
+  bookingNumber String   @unique
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  startDate     DateTime
+  endDate       DateTime
+  totalDays     Int
+  totalPrice    Float
+  status        String   @default("pending") // pending, waiting_verification, waiting_payment, payment_verified, ready_pickup, ongoing, waiting_return, checking, completed, penalty, cancelled
+  notes         String?
+  pickupBranch  String   @default("Sembalun Utama")
+
+  items     BookingItem[]
+  payments  Payment[]
+  penalties Penalty[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BookingItem {
+  id          String        @id @default(uuid())
+  bookingId   String
+  booking     Booking       @relation(fields: [bookingId], references: [id])
+  unitId      String
+  unit        InventoryUnit @relation(fields: [unitId], references: [id])
+  pricePerDay Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payment {
+  id         String    @id @default(uuid())
+  bookingId  String
+  booking    Booking   @relation(fields: [bookingId], references: [id])
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  amount     Float
+  status     String    @default("pending") // pending, paid, verified, rejected
+  proofUrl   String?
+  verifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Verification {
+  id         String  @id @default(uuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id])
+  status     String  @default("pending") // pending, approved, rejected
+  notes      String?
+  verifiedBy String? // admin id
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id      String  @id @default(uuid())
+  userId  String
+  user    User    @relation(fields: [userId], references: [id])
+  title   String
+  message String
+  read    Boolean @default(false)
+  type    String  @default("info") // info, success, warning, error
+
+  createdAt DateTime @default(now())
+}
+
+model MaintenanceLog {
+  id     String        @id @default(uuid())
+  unitId String
+  unit   InventoryUnit @relation(fields: [unitId], references: [id])
+  status String // routine, repair, replaced
+  notes  String?
+  cost   Float?
+
+  createdAt DateTime @default(now())
+}
+
+model Penalty {
+  id        String  @id @default(uuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id])
+  amount    Float
+  reason    String
+  status    String  @default("unpaid") // unpaid, paid
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id      String  @id @default(uuid())
+  userId  String?
+  user    User?   @relation(fields: [userId], references: [id])
+  action  String
+  details String?
+
+  createdAt DateTime @default(now())
+}

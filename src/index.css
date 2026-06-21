@@ -1,0 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --color-forest: #E67E22;
+  --color-orange: #E67E22;
+  --color-cream: #FFFFFF;
+}
+
+:root {
+  --bg-primary: #000000;
+  --bg-secondary: #0A0A0A;
+  --bg-tertiary: #141416;
+  --accent-forest: #E67E22;
+  --accent-orange: #E67E22;
+  --text-cream: #FFFFFF;
+  --text-soft: #A1A1A6; /* Apple aesthetic gray */
+}
+
+body, input, textarea, select, button, * {
+  font-family: var(--font-sans);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-cream);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Force smooth scrolling globally */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Base Interactions and Transitions */
+a, button, select, input, textarea {
+  transition-property: opacity, transform, box-shadow, background-color, border-color, color;
+  transition-duration: 0.25s;
+  transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Liquid Glass Definition - Apple-like translucent panes */
+.liquid-glass {
+  background: rgba(28, 28, 30, 0.45);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 0.5px solid rgba(255, 255, 255, 0.04);
+}
+
+.liquid-glass-navbar, .apple-liquid-glass {
+  background: rgba(10, 10, 12, 0.75);
+  backdrop-filter: blur(30px) saturate(150%);
+  -webkit-backdrop-filter: blur(30px) saturate(150%);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Cards */
+.liquid-glass-card, 
+.card-uniform {
+  background: rgba(28, 28, 30, 0.45);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 0.5px solid rgba(255, 255, 255, 0.04);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+.liquid-glass-card:hover, .card-uniform:hover {
+  background: rgba(36, 36, 38, 0.55);
+  box-shadow: 0 8px 32px -4px rgba(230, 126, 34, 0.15);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Button Refinements */
+.btn-primary {
+  background-color: var(--accent-orange);
+  color: white;
+  border-radius: 8px;
+  font-weight: 500;
+  border: none;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+  
+  box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4);
+}
+
+.btn-secondary {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 8px;
+  font-weight: 500;
+  border: 0.5px solid rgba(255, 255, 255, 0.05);
+}
+.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Standard Inputs & Textareas */
+input, textarea, select {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  color: #FFFFFF !important;
+  border-radius: 10px !important;
+  padding: 0.65rem 1rem !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.1) !important;
+  font-size: 0.95rem;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(230, 126, 34, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.2);
+}
+
+/* Badges */
+.badge-success { @apply bg-green-500/10 text-green-400 px-2.5 py-1 rounded-full text-xs font-medium tracking-wide border border-green-500/20; }
+.badge-warning { @apply bg-yellow-500/10 text-yellow-400 px-2.5 py-1 rounded-full text-xs font-medium tracking-wide border border-yellow-500/20; }
+.badge-error { @apply bg-red-500/10 text-red-400 px-2.5 py-1 rounded-full text-xs font-medium tracking-wide border border-red-500/20; }
+.badge-info { @apply bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded-full text-xs font-medium tracking-wide border border-blue-500/20; }
+.badge-neutral { @apply bg-zinc-500/10 text-zinc-400 px-2.5 py-1 rounded-full text-xs font-medium tracking-wide border border-zinc-500/20; }
+
+
+/* Toast Items */
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  pointer-events: none;
+}
+
+.toast-item {
+  pointer-events: auto;
+  background: rgba(10, 10, 10, 0.98);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  padding: 1rem;
+  border-radius: 1rem;
+  min-width: 280px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.toast-item-success { border-left: 4px solid #E67E22; }
+.toast-item-error { border-left: 4px solid #E67E22; }
+.toast-item-info { border-left: 4px solid #3b82f6; }
+
+/* Clean, crisp typography descriptions */
+.heading-caps { font-family: var(--font-sans); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.heading-crisp { font-family: var(--font-sans); letter-spacing: 0.01em; font-weight: 600; }
+.heading-jumbo { font-family: var(--font-sans); letter-spacing: -0.01em; font-weight: 700; }
+.hero-title { font-family: var(--font-sans); font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+
+.section-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+.section-reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* Custom Scrollbar styled for Gear Catalog / Menus */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px !important;
+  height: 5px !important;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-radius: 999px !important;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(230, 126, 34, 0.3) !important;
+  border-radius: 999px !important;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(230, 126, 34, 0.6) !important;
+}
+.custom-scrollbar {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(230, 126, 34, 0.3) rgba(255, 255, 255, 0.02) !important;
+}
+

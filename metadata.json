@@ -1,0 +1,6 @@
+{
+  "name": "OUTRENT",
+  "description": "Platform Rental Perlengkapan Outdoor Modern dan Profesional.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
