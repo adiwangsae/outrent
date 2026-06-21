@@ -17,9 +17,9 @@ async function startServer() {
 
   console.log(`Starting Express app on Port ${PORT} with PID ${process.pid}`);
 
+  // Database Initialization
   (async () => {
     try {
-      console.log("[Server] Synchronizing local SQLite database...");
       await execAsync("npx prisma db push --skip-generate");
       await prisma.$connect();
       await seedOnStartup(prisma);
@@ -29,15 +29,11 @@ async function startServer() {
     }
   })();
 
-  // 1. Perbaikan CORS: Mengizinkan domain ngrok secara dinamis
+  // 1. CORS Terbuka (Mengatasi Error: Not allowed by CORS)
   app.use(cors({
-    origin: (origin, callback) => {
-      if (!origin || origin.includes('localhost') || origin.endsWith('.ngrok-free.app')) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
     credentials: true
   }));
   
@@ -51,7 +47,7 @@ async function startServer() {
   // Mount API
   app.use('/api', apiRouter);
 
-  // 2. Perbaikan Vite Middleware: Catch-all agar tidak putih
+  // 2. Vite Middleware (Mode Development)
   if (process.env.NODE_ENV !== "production") {
     console.log("[Server] Mounting Vite middleware...");
     const vite = await createViteServer({
@@ -61,20 +57,22 @@ async function startServer() {
     app.use(vite.middlewares);
 
     app.use('*', async (req, res, next) => {
-      const url = req.originalUrl;
       try {
-        let template = fs.readFileSync(path.resolve('index.html'), 'utf-8');
-        template = await vite.transformIndexHtml(url, template);
-        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+        const template = fs.readFileSync(path.resolve('index.html'), 'utf-8');
+        const html = await vite.transformIndexHtml(req.originalUrl, template);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
       } catch (e: any) {
         vite.ssrFixStacktrace(e);
         next(e);
       }
     });
   } else {
+    // Mode Production
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
+    if (fs.existsSync(distPath)) {
+        app.use(express.static(distPath));
+        app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
+    }
   }
 
   app.listen(PORT, "0.0.0.0", () => {
