@@ -12,6 +12,9 @@ export default defineConfig(() => {
       },
     },
     server: {
+      // Tambahkan ini agar domain Ngrok tidak diblokir oleh Vite
+      allowedHosts: ['.ngrok-free.dev', '.ngrok-free.app'],
+
       // Disable HMR and WebSocket server entirely
       hmr: false,
       ws: false,
