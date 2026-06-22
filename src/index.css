@@ -61,8 +61,8 @@ a, button, select, input, textarea {
 .liquid-glass-card, 
 .card-uniform {
   background: rgba(28, 28, 30, 0.45);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
   border: 0.5px solid rgba(255, 255, 255, 0.04);
   border-radius: 20px;
   box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
