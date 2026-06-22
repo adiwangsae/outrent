@@ -210,6 +210,9 @@ export default function AdminDashboard() {
   const [showAddInv, setShowAddInv] = useState(false);
   const [newInv, setNewInv] = useState({ categoryId: "", name: "", desc: "", price: "", codes: "" });
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmDeleteUnitId, setConfirmDeleteUnitId] = useState<string | null>(null);
+
   // Customizable Settings State
   const [penaltyRate, setPenaltyRate] = useState("50000"); // Biaya Keterlambatan per Hari
   const [mainBranch, setMainBranch] = useState("Sembalun Utama"); // Cabang Utama
@@ -349,7 +352,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleUpdateUnitStatus = async (unitId: string, status: string, condition?: string) => {
+  const handleUpdateUnitStatus = async (unitId: string, unitCode: string, status: string, condition?: string) => {
     try {
       const res = await fetch(`/api/admin/inventory/units/${unitId}/status`, {
         method: 'POST',
@@ -360,15 +363,116 @@ export default function AdminDashboard() {
         body: JSON.stringify({ status, condition })
       });
       if (!res.ok) throw new Error("Gagal");
-      toast.success(`Unit ${unitId} berhasil diubah ke status: ${status}`);
-      addLocalLog("INVENTORI", `Unit #${unitId} diupdate kondisi ke ${condition || status}`);
+      toast.success(`Unit ${unitCode} berhasil diubah ke status: ${status}`);
+      addLocalLog("INVENTORI", `Unit ${unitCode} diupdate kondisi ke ${condition || status}`);
       fetchData();
     } catch {
       toast.error("Gagal memperbarui status unit");
     }
   };
 
-  const handleDamageDecision = async (unitId: string, decisionStatus: string, tingkat: string, catatan: string) => {
+  const handleDeleteItem = (itemId: string) => {
+    setConfirmDeleteId(itemId);
+  };
+
+  const executeDeleteItem = async () => {
+    if (!confirmDeleteId) return;
+    const itemId = confirmDeleteId;
+    try {
+      const res = await fetch(`/api/admin/inventory/${itemId}`, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + token }
+      });
+      if (!res.ok) throw new Error("Gagal menghapus item");
+      toast.success("Item berhasil dihapus");
+      addLocalLog("INVENTORI", `Item #${itemId.substring(0,6)} dihapus.`);
+      setConfirmDeleteId(null);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleAddUnitToItem = async (itemId: string) => {
+    try {
+      const item = inventoryItems.find((i) => i.id === itemId);
+      if (!item) return;
+
+      let newCode = "";
+      if (item.units && item.units.length > 0) {
+        const existingCodes = item.units.map((u: any) => u.unitCode);
+        
+        // Find existing prefix and max number
+        let maxNum = -1;
+        let prefixOfMax = "";
+        let padLen = 0;
+
+        for (const code of existingCodes) {
+          const match = code.match(/(.*?)(\d+)$/);
+          if (match) {
+            const prefix = match[1];
+            const numStr = match[2];
+            const num = parseInt(numStr, 10);
+            if (num > maxNum) {
+              maxNum = num;
+              prefixOfMax = prefix;
+              padLen = numStr.length;
+            }
+          }
+        }
+
+        if (maxNum !== -1) {
+          const nextNumStr = String(maxNum + 1).padStart(padLen, '0');
+          newCode = `${prefixOfMax}${nextNumStr}`;
+        } else {
+          // Fallback if no numeric ending
+          newCode = `${existingCodes[existingCodes.length - 1]}-1`;
+        }
+      } else {
+        // Fallback if no units exist at all
+        newCode = `UNT-${itemId.substring(0, 4).toUpperCase()}-01`;
+      }
+
+      const res = await fetch(`/api/admin/inventory/${itemId}/units`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token 
+        },
+        body: JSON.stringify({ unitCode: newCode })
+      });
+      if (!res.ok) throw new Error("Gagal menambah unit (mungkin kode duplikat)");
+      toast.success(`Unit ${newCode} berhasil ditambahkan`);
+      addLocalLog("INVENTORI", `Unit ${newCode} ditambahkan ke Item ${itemId.substring(0,6)}.`);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleDeleteUnit = (unitId: string) => {
+    setConfirmDeleteUnitId(unitId);
+  };
+
+  const executeDeleteUnit = async () => {
+    if (!confirmDeleteUnitId) return;
+    const unitId = confirmDeleteUnitId;
+    try {
+      const res = await fetch(`/api/admin/inventory/units/${unitId}`, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + token }
+      });
+      if (!res.ok) throw new Error("Gagal menghapus unit");
+      toast.success("Unit berhasil dihapus");
+      addLocalLog("INVENTORI", `Unit #${unitId.substring(0,6)} dihapus.`);
+      setConfirmDeleteUnitId(null);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleDamageDecision = async (unitId: string, unitCode: string, decisionStatus: string, tingkat: string, catatan: string) => {
     try {
       const formatLevel = tingkat || "Ringan";
       const formatNote = catatan || "Tidak ada catatan detail";
@@ -401,8 +505,8 @@ export default function AdminDashboard() {
         });
       }
 
-      toast.success(`Unit dialihkan ke status: ${decisionStatus}`);
-      addLocalLog("DAMAGE_CONTROL", `Unit #${unitId} dikonfigurasi ke ${decisionStatus.toUpperCase()} [Kerusakan: ${formatLevel}]`);
+      toast.success(`Unit ${unitCode} dialihkan ke status: ${decisionStatus}`);
+      addLocalLog("DAMAGE_CONTROL", `Unit ${unitCode} dikonfigurasi ke ${decisionStatus.toUpperCase()} [Kerusakan: ${formatLevel}]`);
       fetchData();
     } catch {
       toast.error("Gagal memproses keputusan penanganan barang rusak");
@@ -742,7 +846,7 @@ export default function AdminDashboard() {
       // Signature/Footer area
       doc.setFontSize(8);
       doc.setTextColor(textLight[0], textLight[1], textLight[2]);
-      doc.text("Outrent Systems Cloud Platform Auto Report & Laporan Terkomputasi &bull; Dokumen valid tanpa tanda tangan fisik.", 15, 280);
+      doc.text("OUTRENT Systems Cloud Platform Auto Report & Laporan Terkomputasi &bull; Dokumen valid tanpa tanda tangan fisik.", 15, 280);
 
       doc.save(`OUTRENT_Laporan_${reportPeriod}_${new Date().toISOString().substring(0,10)}.pdf`);
       toast.success("Laporan PDF berhasil diunduh ke komputer Anda!");
@@ -1252,7 +1356,7 @@ export default function AdminDashboard() {
                                 {t('admin.category')}: {item.category?.name || "Gear"} &bull; Rp {item.pricePerDay?.toLocaleString("id-ID")} / {t('admin.day')}
                               </p>
                             </div>
-                            <span className="text-[10px] bg-white/5 text-zinc-400 px-2 py-1 rounded font-mono uppercase">ID: {item.id.substring(0,6)}</span>
+                            <span className="text-[10px] bg-white/5 text-zinc-400 px-2 py-1 rounded font-mono uppercase mt-1 shrink-0">ID: {item.id.substring(0,6)}</span>
                           </div>
 
                           <div className="space-y-3 flex-1 overflow-y-auto pr-2 max-h-72">
@@ -1287,7 +1391,7 @@ export default function AdminDashboard() {
                                   {unit.status !== "available" && (
                                     <button
                                       title="Mark Ready"
-                                      onClick={() => handleUpdateUnitStatus(unit.id, "available", "Optimal")}
+                                      onClick={() => handleUpdateUnitStatus(unit.id, unit.unitCode, "available", "Optimal")}
                                       className="p-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl cursor-pointer transition-colors"
                                     >
                                       <CheckCircle2 size={14} />
@@ -1305,15 +1409,37 @@ export default function AdminDashboard() {
                                   {unit.status !== "damaged" && (
                                     <button
                                       title="Mark Damaged"
-                                      onClick={() => handleUpdateUnitStatus(unit.id, "damaged", "Reported Damage")}
+                                      onClick={() => handleUpdateUnitStatus(unit.id, unit.unitCode, "damaged", "Reported Damage")}
                                       className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl cursor-pointer transition-colors"
                                     >
                                       <AlertCircle size={14} />
                                     </button>
                                   )}
+                                  <button
+                                    title="Hapus Unit"
+                                    onClick={() => handleDeleteUnit(unit.id)}
+                                    className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl cursor-pointer transition-colors border border-red-500/20"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
                                 </div>
                               </div>
                             ))}
+                          </div>
+
+                          <div className="pt-4 mt-4 border-t border-white/5 flex flex-wrap gap-3 justify-end items-center">
+                            <button 
+                                onClick={() => handleAddUnitToItem(item.id)}
+                                className="px-3 md:px-4 py-2 flex items-center gap-2 text-xs font-semibold bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all"
+                            >
+                                <PlusCircle size={14} /> Tambah Unit
+                            </button>
+                            <button 
+                                onClick={() => handleDeleteItem(item.id)}
+                                className="px-3 md:px-4 py-2 flex items-center gap-2 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all"
+                            >
+                                <Trash2 size={14} /> Hapus Item
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -1826,7 +1952,7 @@ export default function AdminDashboard() {
                             <div className="pt-6 mt-6 border-t border-white/5 flex justify-between items-center px-2">
                               <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold">{t('admin.cost')}: 0 IDR</span>
                               <button
-                                onClick={() => handleUpdateUnitStatus(unit.id, "available", "Optimal")}
+                                onClick={() => handleUpdateUnitStatus(unit.id, unit.unitCode, "available", "Optimal")}
                                 className="px-4 py-2.5 bg-white text-black hover:bg-white/90 font-semibold rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-colors whitespace-nowrap"
                               >
                                 <CheckCircle2 size={14} /> {t('admin.finish_repair')}
@@ -1912,14 +2038,14 @@ export default function AdminDashboard() {
                               <div className="pt-6 mt-6 border-t border-white/5 grid grid-cols-2 gap-3">
                                 <button
                                   title="Send to Repair"
-                                  onClick={() => handleDamageDecision(unit.id, "maintenance", tingkat, catatan)}
+                                  onClick={() => handleDamageDecision(unit.id, unit.unitCode, "maintenance", tingkat, catatan)}
                                   className="py-3 bg-transparent hover:bg-white/5 text-white rounded-xl text-xs font-semibold uppercase transition-colors border border-white/5 flex items-center justify-center gap-2 cursor-pointer"
                                 >
                                   <Wrench size={14} /> {t('admin.repair')}
                                 </button>
                                 <button
                                   title="Dispose Unit"
-                                  onClick={() => handleDamageDecision(unit.id, "disposed", tingkat, catatan)}
+                                  onClick={() => handleDamageDecision(unit.id, unit.unitCode, "disposed", tingkat, catatan)}
                                   className="py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-xs font-semibold uppercase transition-colors flex items-center justify-center gap-2 cursor-pointer"
                                 >
                                   <XCircle size={14} /> {t('admin.dispose')}
@@ -2265,7 +2391,7 @@ export default function AdminDashboard() {
             <div className="px-4 py-8 bg-transparent rounded-2xl flex items-center justify-center border border-white/5">
               <img 
                 src={`/uploads/${selectedProofImg}`} 
-                alt="Bukti Transfer Outrent Bank" 
+                alt="Bukti Transfer OUTRENT Bank" 
                 className="max-h-96 rounded-xl object-contain"
                 referrerPolicy="no-referrer"
                 onError={(e) => {
@@ -2393,6 +2519,34 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Confirm Delete Item */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="liquid-glass-card p-6 md:p-8 rounded-2xl max-w-sm w-full shadow-2xl animate-scale-up">
+            <h3 className="text-xl font-semibold text-white mb-2">Hapus Produk?</h3>
+            <p className="text-sm text-zinc-400 mb-6">Penghapusan produk akan ikut menghapus semua unit yang tersambung dengannya. Aksi ini tidak dapat dibatalkan.</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setConfirmDeleteId(null)} className="px-4 py-2 text-xs font-semibold hover:bg-white/5 rounded-xl transition-colors">Batal</button>
+              <button onClick={executeDeleteItem} className="px-4 py-2 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-colors">Hapus</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Confirm Delete Unit */}
+      {confirmDeleteUnitId && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="liquid-glass-card p-6 md:p-8 rounded-2xl max-w-sm w-full shadow-2xl animate-scale-up border border-white/10">
+            <h3 className="text-xl font-semibold text-white mb-2">Hapus Unit?</h3>
+            <p className="text-sm text-zinc-400 mb-6">Unit inventaris ini akan dihapus dari platform. Aksi ini tidak dapat dibatalkan.</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setConfirmDeleteUnitId(null)} className="px-4 py-2 text-xs font-semibold hover:bg-white/5 rounded-xl transition-colors">Batal</button>
+              <button onClick={executeDeleteUnit} className="px-4 py-2 text-xs font-semibold bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors shadow-lg shadow-red-500/20">Hapus</button>
+            </div>
           </div>
         </div>
       )}

@@ -333,6 +333,67 @@ router.post("/inventory", async (req, res) => {
   }
 });
 
+// DEL to delete inventory item
+router.delete("/inventory/:itemId", async (req, res) => {
+  const { itemId } = req.params;
+  try {
+    await prisma.bookingItem.deleteMany({
+      where: { unit: { inventoryItemId: itemId } }
+    });
+    await prisma.maintenanceLog.deleteMany({
+      where: { unit: { inventoryItemId: itemId } }
+    });
+    await prisma.inventoryUnit.deleteMany({
+      where: { inventoryItemId: itemId }
+    });
+    await prisma.inventoryItem.delete({
+      where: { id: itemId }
+    });
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error("Delete unit err:", err);
+    res.status(500).json({ error: "Gagal menghapus item" });
+  }
+});
+
+// POST to add new unit to existing item
+router.post("/inventory/:itemId/units", async (req, res) => {
+  const { itemId } = req.params;
+  const { unitCode } = req.body;
+  try {
+    const unit = await prisma.inventoryUnit.create({
+      data: {
+        inventoryItemId: itemId,
+        unitCode,
+        status: "available",
+        condition: "Optimal"
+      }
+    });
+    res.json({ success: true, unit });
+  } catch (err: any) {
+    res.status(500).json({ error: "Gagal menambah unit" });
+  }
+});
+
+// DEL to delete a unit
+router.delete("/inventory/units/:unitId", async (req, res) => {
+  const { unitId } = req.params;
+  try {
+    await prisma.bookingItem.deleteMany({
+      where: { unitId }
+    });
+    await prisma.maintenanceLog.deleteMany({
+      where: { unitId }
+    });
+    await prisma.inventoryUnit.delete({
+      where: { id: unitId }
+    });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: "Gagal menghapus unit" });
+  }
+});
+
 // POST to update unit status manually (available, maintenance, damaged, lost)
 router.post("/inventory/units/:unitId/status", async (req, res) => {
   const { unitId } = req.params;

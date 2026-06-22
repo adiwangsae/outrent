@@ -658,9 +658,18 @@ export default function LandingPage() {
                   <p className="text-sm text-zinc-400 leading-relaxed font-light">
                     {t('landing.help_desc')}
                   </p>
-                  <div className="mt-2 text-xs text-zinc-500 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                    <span>{t('landing.help_hours')}</span>
+                  <div className="mt-2 text-xs text-zinc-500 flex items-start gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block mt-1" />
+                    <div className="flex flex-col">
+                      {t('landing.help_hours').split(': ').length > 1 ? (
+                        <>
+                          <span className="font-semibold text-zinc-300">{t('landing.help_hours').split(': ')[0]}:</span>
+                          <span>{t('landing.help_hours').split(': ')[1]}</span>
+                        </>
+                      ) : (
+                        <span>{t('landing.help_hours')}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -761,7 +770,7 @@ export default function LandingPage() {
                 <Link to="/terms" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">{t('landing.terms_conditions')}</Link>
              </div>
              <div className="text-[11px] sm:text-xs text-zinc-500 font-light tracking-wide uppercase text-center px-4">
-                &copy; 2026 Outrent Digital Platform.<br className="block sm:hidden" /> <span className="hidden sm:inline"></span>{t('landing.rights')}
+                &copy; 2026 OUTRENT Digital Platform.<br className="block sm:hidden" /> <span className="hidden sm:inline"></span>{t('landing.rights')}
              </div>
           </div>
        </footer>

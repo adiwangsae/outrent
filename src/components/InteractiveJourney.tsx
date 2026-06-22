@@ -463,7 +463,7 @@ export default function InteractiveJourney() {
               {/* Location List Left */}
               <div className="lg:col-span-6 flex flex-col gap-4">
                 <div className="mb-2">
-                  <h3 className="text-xl font-semibold text-white">{isId ? "Outpost Base Camp Outrent" : "Outrent Base Camp Outpost"}</h3>
+                  <h3 className="text-xl font-semibold text-white">{isId ? "Outpost Base Camp OUTRENT" : "OUTRENT Base Camp Outpost"}</h3>
                   <p className="text-xs text-white/45 mt-1">{isId ? "Pilih base camp pengambilan yang sesuai dengan jalur hiking Anda" : "Choose the collection base camp corresponding to your hiking trail"}</p>
                 </div>
 
