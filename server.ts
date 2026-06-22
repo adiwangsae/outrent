@@ -18,15 +18,18 @@ async function startServer() {
   console.log(`Starting Express app on Port ${PORT} with PID ${process.pid}`);
 
   // Database Initialization
-  (async () => {
-    try {
-      await execAsync("npx prisma db push --skip-generate");
-      await prisma.$connect();
+ (async () => {
+  try {
+    await prisma.$connect();
+
+    if (process.env.NODE_ENV !== "production") {
       await seedOnStartup(prisma);
-      console.log("[Server] Database ready.");
-    } catch (e: any) {
-      console.error("[Server] Startup Error:", e.message);
     }
+
+    console.log("[Server] Database ready.");
+  } catch (e: any) {
+    console.error("[Server] Startup Error:", e.message);
+  }
   })();
 
   // 1. CORS Terbuka (Mengatasi Error: Not allowed by CORS)
