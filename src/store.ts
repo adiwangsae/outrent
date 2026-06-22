@@ -21,9 +21,9 @@ interface ActivityLog {
 interface AppState {
   user: User | null;
   token: string | null;
-  notifs: any[]; // SystemNotifs
+  notifs: any[];
   activities: ActivityLog[];
-  
+
   cart: { item: any; qty: number }[];
   isCartOpen: boolean;
 
@@ -35,51 +35,118 @@ interface AppState {
   setIsCartOpen: (isOpen: boolean) => void;
 }
 
+// ===== SAFE PARSE =====
+function safeParse<T>(key: string, fallback: T): T {
+  try {
+    const value = localStorage.getItem(key);
+
+    if (!value) return fallback;
+
+    return JSON.parse(value);
+  } catch (error) {
+    console.warn(`[Store] Invalid localStorage data detected for ${key}. Resetting...`);
+    localStorage.removeItem(key);
+    return fallback;
+  }
+}
+
 export const useStore = create<AppState>((set) => {
   const token = localStorage.getItem('outrent_token');
-  const user = JSON.parse(localStorage.getItem('outrent_user') || 'null');
-  const cart = JSON.parse(localStorage.getItem('bc_cart_2026') || '[]');
+
+  const user = safeParse<User | null>(
+    'outrent_user',
+    null
+  );
+
+  const cart = safeParse<{ item: any; qty: number }[]>(
+    'bc_cart_2026',
+    []
+  );
 
   return {
     user,
     token,
+
     notifs: [],
     activities: [],
+
     cart,
     isCartOpen: false,
 
     setAuth: (newUser, newToken) => {
-      if (newToken && newUser) {
+      if (newUser && newToken) {
         localStorage.setItem('outrent_token', newToken);
         localStorage.setItem('outrent_user', JSON.stringify(newUser));
-        set({ user: newUser, token: newToken });
+
+        set({
+          user: newUser,
+          token: newToken
+        });
       } else {
         localStorage.removeItem('outrent_token');
         localStorage.removeItem('outrent_user');
-        set({ user: null, token: null });
+
+        set({
+          user: null,
+          token: null
+        });
       }
     },
+
     logout: () => {
       localStorage.removeItem('outrent_token');
       localStorage.removeItem('outrent_user');
-      set({ user: null, token: null });
-    },
-    addActivity: (action) => {
-      set((state) => ({ activities: [{ id: Date.now(), action, time: 'Baru saja' }, ...state.activities] }));
-    },
-    setNotifs: (newNotifs) => {
-      set((state) => {
-        const updated = typeof newNotifs === 'function' ? newNotifs(state.notifs) : newNotifs;
-        return { notifs: updated };
+
+      set({
+        user: null,
+        token: null
       });
     },
+
+    addActivity: (action) => {
+      set((state) => ({
+        activities: [
+          {
+            id: Date.now(),
+            action,
+            time: 'Baru saja'
+          },
+          ...state.activities
+        ]
+      }));
+    },
+
+    setNotifs: (newNotifs) => {
+      set((state) => ({
+        notifs:
+          typeof newNotifs === 'function'
+            ? newNotifs(state.notifs)
+            : newNotifs
+      }));
+    },
+
     setCart: (newCart) => {
       set((state) => {
-        const updated = typeof newCart === 'function' ? newCart(state.cart) : newCart;
-        localStorage.setItem('bc_cart_2026', JSON.stringify(updated));
-        return { cart: updated };
+        const updated =
+          typeof newCart === 'function'
+            ? newCart(state.cart)
+            : newCart;
+
+        localStorage.setItem(
+          'bc_cart_2026',
+          JSON.stringify(updated)
+        );
+
+        return {
+          cart: updated
+        };
       });
     },
-    setIsCartOpen: (isOpen) => set({ isCartOpen: isOpen })
+
+    setIsCartOpen: (isOpen) => {
+      set({
+        isCartOpen: isOpen
+      });
+    }
   };
 });
