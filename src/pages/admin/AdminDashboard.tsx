@@ -815,8 +815,8 @@ export default function AdminDashboard() {
                     className={`
                       w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition-all duration-300 ease-out cursor-pointer select-none
                       ${isActive 
-                        ? 'bg-white/5 text-white shadow-sm' 
-                        : 'text-zinc-400 hover:bg-transparent hover:text-white'}
+                        ? 'bg-white/10 backdrop-blur-md text-white shadow-sm' 
+                        : 'text-zinc-400 hover:bg-white/5 hover:backdrop-blur-sm hover:text-white'}
                     `}
                   >
                     <div className="flex items-center gap-3">
@@ -877,7 +877,7 @@ export default function AdminDashboard() {
         {mobileMenuOpen && (
           <div 
             onClick={() => setMobileMenuOpen(false)}
-            className="fixed inset-0 bg-transparent/80 z-30 lg:hidden transition-opacity"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden transition-opacity"
           />
         )}
 
